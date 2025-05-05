@@ -8,7 +8,7 @@ import {
 	fontSizeOptions,
 	OptionType,
 } from 'src/constants/articleProps';
-import { SyntheticEvent, useState } from 'react';
+import { SyntheticEvent, useEffect, useRef, useState } from 'react';
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { Text } from 'src/ui/text';
@@ -39,6 +39,22 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 		props.currentContentWidth
 	);
 
+	const formRef = useRef<HTMLElement | null>(null);
+
+	useEffect(() => {
+		const handleClickOutside = (event: any) => {
+			if (formRef.current && !formRef.current.contains(event.target)) {
+				setIsFormOpen(false);
+			}
+		};
+
+		document.addEventListener('mousedown', handleClickOutside);
+
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside);
+		};
+	}, [formRef]);
+
 	const toggleFormVisible = () => {
 		isFormOpen ? setIsFormOpen(false) : setIsFormOpen(true);
 	};
@@ -67,6 +83,7 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 		<>
 			<ArrowButton isOpen={isFormOpen} onClick={toggleFormVisible} />
 			<aside
+				ref={formRef}
 				className={
 					isFormOpen
 						? clsx(styles.container, styles.container_open)
