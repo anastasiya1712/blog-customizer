@@ -3,12 +3,13 @@ import clsx from 'clsx';
 import {
 	backgroundColors,
 	contentWidthArr,
+	defaultArticleState,
 	fontColors,
 	fontFamilyOptions,
 	fontSizeOptions,
 	OptionType,
 } from 'src/constants/articleProps';
-import { SyntheticEvent, useEffect, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import { ArrowButton } from 'src/ui/arrow-button';
 import { Button } from 'src/ui/button';
 import { Text } from 'src/ui/text';
@@ -16,6 +17,7 @@ import { Select } from 'src/ui/select';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
 import { SubmitForm } from 'src/types';
+import { useOutsideClickClose } from 'src/ui/select/hooks/useOutsideClickClose';
 
 type ArticleParamsFormProps = {
 	isFormOpen: boolean;
@@ -28,7 +30,7 @@ type ArticleParamsFormProps = {
 };
 
 export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
-	const [isFormOpen, setIsFormOpen] = useState(props.isFormOpen);
+	const [isOpen, setIsOpen] = useState(props.isFormOpen);
 	const [currentFont, setCurrentFont] = useState(props.currentFont);
 	const [currentFontSize, setCurrentFontSize] = useState(props.currentFontSize);
 	const [currentFontColor, setCurrentFontColor] = useState(
@@ -39,35 +41,32 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 		props.currentContentWidth
 	);
 
-	const formRef = useRef<HTMLElement | null>(null);
+	const rootRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		const handleClickOutside = (event: any) => {
-			if (formRef.current && !formRef.current.contains(event.target)) {
-				setIsFormOpen(false);
-			}
-		};
+	const onClose = () => {
+		setIsOpen(false);
+	};
 
-		document.addEventListener('mousedown', handleClickOutside);
-
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, [formRef]);
+	useOutsideClickClose({
+		isOpen,
+		rootRef,
+		onClose,
+		onChange: setIsOpen,
+	});
 
 	const toggleFormVisible = () => {
-		isFormOpen ? setIsFormOpen(false) : setIsFormOpen(true);
+		isOpen ? setIsOpen(false) : setIsOpen(true);
 	};
 
 	const resetForm = () => {
-		setCurrentFont(props.currentFont);
-		setCurrentFontSize(props.currentFontSize);
-		setCurrentFontColor(props.currentFontColor);
-		setCurrentBgColor(props.currentBgColor);
-		setCurrentContentWidth(props.currentContentWidth);
+		setCurrentFont(defaultArticleState.fontFamilyOption);
+		setCurrentFontSize(defaultArticleState.fontSizeOption);
+		setCurrentFontColor(defaultArticleState.fontColor);
+		setCurrentBgColor(defaultArticleState.backgroundColor);
+		setCurrentContentWidth(defaultArticleState.contentWidth);
 	};
 
-	const handleSubmit = (event: SyntheticEvent) => {
+	const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 
 		props.onSubmitForm({
@@ -81,11 +80,11 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 
 	return (
 		<>
-			<ArrowButton isOpen={isFormOpen} onClick={toggleFormVisible} />
+			<ArrowButton isOpen={isOpen} onClick={toggleFormVisible} />
 			<aside
-				ref={formRef}
+				ref={rootRef}
 				className={
-					isFormOpen
+					isOpen
 						? clsx(styles.container, styles.container_open)
 						: styles.container
 				}>
@@ -99,7 +98,6 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 						selected={currentFont}
 						options={fontFamilyOptions}
 						onChange={setCurrentFont}
-						onClose={() => {}}
 					/>
 
 					<RadioGroup
@@ -115,7 +113,6 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 						selected={currentFontColor}
 						options={fontColors}
 						onChange={setCurrentFontColor}
-						onClose={() => {}}
 					/>
 
 					<Separator />
@@ -125,7 +122,6 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 						selected={currentBgColor}
 						options={backgroundColors}
 						onChange={setCurrentBgColor}
-						onClose={() => {}}
 					/>
 
 					<Select
@@ -133,7 +129,6 @@ export const ArticleParamsForm = (props: ArticleParamsFormProps) => {
 						selected={currentContentWidth}
 						options={contentWidthArr}
 						onChange={setCurrentContentWidth}
-						onClose={() => {}}
 					/>
 
 					<div className={styles.bottomContainer}>
